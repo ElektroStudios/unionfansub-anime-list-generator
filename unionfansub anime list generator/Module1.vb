@@ -85,12 +85,21 @@ Public Module Module1
                 Dim animeTitle As String = listNode.InnerText
                 Dim animeGenre As String = animeDoc.DocumentNode.SelectSingleNode("//div[@class='ficha']//div//text()[contains(., 'Género')]/../..").InnerText
                 Dim animeYear As String = animeDoc.DocumentNode.SelectSingleNode("//div[@class='ficha']//div//span[@class='produccion']").InnerText
+                Dim animeSynopsis As String = String.Empty
+                Try
+                    animeSynopsis = String.Join(Environment.NewLine,
+                                                From node As HtmlNode In animeDoc.DocumentNode.SelectSingleNode("//div[@class='post_body'][1]")?.SelectNodes("./text()[normalize-space()]")
+                                                Select node.InnerText).Replace(Environment.NewLine, "").Trim({""""c, " "c})
+                Catch ' ex As ArgumentNullException
+                    ' Do nothing.
+                End Try
 
                 Dim element As New XElement(XmlConvert.EncodeLocalName(animeTitle))
                 element.Add("<font face=""consolas"" color=""silver"">")
                 element.Add(String.Format("<h2><a href=""{0}"">{1}</a></h2>", animeUri.ToString(), animeTitle), Environment.NewLine,
                                 String.Format("{0}<br>", animeGenre), Environment.NewLine,
                                 String.Format("<b>Año:</b> {0}<br><br>", animeYear), Environment.NewLine,
+                                String.Format("{0}<br><br>", animeSynopsis), Environment.NewLine,
                                 "</font><ul>")
 
                 Dim imgNodes As HtmlNodeCollection = animeDoc.DocumentNode.SelectNodes("//div[@class='spoil']//text()[contains(., 'Capturas')]/../..//a") ' animeDoc.DocumentNode.SelectNodes("//span[@class='dimg']//@data-src")
@@ -121,7 +130,7 @@ Public Module Module1
             Directory.CreateDirectory(".\Output")
         End If
         Console.WriteLine("Writing Index.htm file...")
-        File.WriteAllText(".\Output\Index.htm", New XElement(htmlTemplate).Value)
+        File.WriteAllText(".\Output\_Index.htm", New XElement(htmlTemplate).Value)
 
         Dim elementLists As IEnumerable(Of KeyValuePair(Of Char, IEnumerable(Of XElement))) =
             (From el As XElement In elementList
